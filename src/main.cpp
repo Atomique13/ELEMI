@@ -10,6 +10,22 @@ void setup()
 {
   Serial.begin(115200); // Serial debug
   delay(1000);
+  pinMode(20, OUTPUT);
+  ledcSetup(0, 5000, 8);
+  ledcAttachPin(20, 4);
+  ledcWriteNote(4, NOTE_Eb, 5);
+  delay(100);
+  ledcWriteNote(4, NOTE_Eb, 4);
+  delay(200);
+  ledcWriteNote(4, NOTE_Bb, 5);
+  delay(400);
+  ledcWriteNote(4, NOTE_F, 4);
+  delay(500);
+  ledcWriteNote(4, NOTE_Eb, 5);
+  delay(200);
+  ledcWriteNote(4, NOTE_Bb, 5);
+  delay(1000);
+  ledcDetachPin(20);
   Serial.printf("Connecting to [%s]", ssid);
   WiFi.setHostname(hostname);
   WiFi.mode(WIFI_STA);
