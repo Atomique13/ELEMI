@@ -286,9 +286,9 @@ void setup()
   ArduinoOTA.begin();
   // octo
   // Buzzer
-  // pinMode(BUZZER_PIN, OUTPUT);
-  // ledcSetup(4, 5000, 8);
-  // ledcAttachPin(BUZZER_PIN, 4);
+   pinMode(BUZZER_PIN, OUTPUT);
+   ledcSetup(4, 5000, 8);
+   ledcAttachPin(BUZZER_PIN, 4);
 
   tft.begin();        /* TFT init */
   tft.setRotation(2); /* Landscape orientation, flipped */
