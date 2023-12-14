@@ -286,7 +286,8 @@ void setup()
       Serial.println("\nEnd");
     })
     .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      unsigned percent = (progress / (total / 100));
+      Serial.printf("Progress: %u%%\r", percent);
     })
     .onError([](ota_error_t error) {
       Serial.printf("Error[%u]: ", error);
