@@ -24,7 +24,7 @@ WiFiClient client;
 
 
 // You only need to set one of the of follwowing:
-IPAddress ip(192, 168, 0, 173);                         // Your IP address of your OctoPrint server (inernal or external)
+IPAddress ip(******************);                         // Your IP address of your OctoPrint server (inernal or external)
 //char* octoprint_host = "octopi";  // Or your hostname. Comment out one or the other.
 
 const int octoprint_httpPort = 80;  //If you are connecting through a router this will work, but you need a random port forwarded to the OctoPrint server from your router. Enter that port here if you are external
