@@ -8,6 +8,9 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <OctoPrintAPI.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 Ticker ticker1;
 #define lv_font_montserrat_48
 static lv_obj_t *STATE;
@@ -16,18 +19,18 @@ static lv_obj_t *BED;
 static lv_obj_t *IP;
 //octo
 const char* ssid = "*********";          // your network SSID (name)
-const char* password = "****************";  // your network password
+const char* password = "*******";  // your network password
 
 WiFiClient client;
 
 
 
 // You only need to set one of the of follwowing:
-IPAddress ip(192, 168, 0, ********);                         // Your IP address of your OctoPrint server (inernal or external)
+IPAddress ip(192, 168, 0, **************);                         // Your IP address of your OctoPrint server (inernal or external)
 //char* octoprint_host = "octopi";  // Or your hostname. Comment out one or the other.
 
 const int octoprint_httpPort = 80;  //If you are connecting through a router this will work, but you need a random port forwarded to the OctoPrint server from your router. Enter that port here if you are external
-String octoprint_apikey = "*****"; //See top of file or GIT Readme about getting API key
+String octoprint_apikey = "********"; //See top of file or GIT Readme about getting API key
 
 String printerOperational;
 String printerPaused;
@@ -259,13 +262,42 @@ void setup()
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(5000);
     Serial.print(".");
+    //ESP.restart();
   }
+  ArduinoOTA.setHostname("myesp32");
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
   //octo
   //Buzzer
   //pinMode(BUZZER_PIN, OUTPUT);
@@ -322,7 +354,7 @@ void setup()
 
 void loop()
 {
-  
+  ArduinoOTA.handle();
   //***************************************************lvgl刷新********************
   lv_timer_handler(); /* let the GUI do its work */
   //ledcWrite(4, 0);//关闭蜂鸣器
@@ -333,7 +365,7 @@ void loop()
       if(api.getOctoprintVersion()){
         Serial.print("Octoprint API: ");
         Serial.println(api.octoprintVer.octoprintApi);
-        Serial.print("Octoprint Server: ");
+        Serial.print("Octoprint Server13: ");
         Serial.println(api.octoprintVer.octoprintServer);
       }
       Serial.println();
