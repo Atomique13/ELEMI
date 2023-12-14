@@ -1,3 +1,4 @@
+#include "config.cpp"
 #include <Arduino.h>
 #include <lvgl.h>
 #define LGFX_USE_V1
@@ -5,7 +6,47 @@
 #include "FT6236.h"
 #include <Wire.h>
 #include <Ticker.h> 
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <OctoPrintAPI.h>
 Ticker ticker1;
+#define lv_font_montserrat_48
+static lv_obj_t *STATE;
+static lv_obj_t *TOOL;
+static lv_obj_t *BED;
+static lv_obj_t *IP;
+//octo
+const char* ssid = wifi_ssid;          // your network SSID (name)
+const char* password = wifi_pass;  // your network password
+
+WiFiClient client;
+
+
+
+// You only need to set one of the of follwowing:
+IPAddress ip(192, 168, 0, 173);                         // Your IP address of your OctoPrint server (inernal or external)
+//char* octoprint_host = "octopi";  // Or your hostname. Comment out one or the other.
+
+const int octoprint_httpPort = 80;  //If you are connecting through a router this will work, but you need a random port forwarded to the OctoPrint server from your router. Enter that port here if you are external
+String octoprint_apikey = api_key; //See top of file or GIT Readme about getting API key
+
+String printerOperational;
+String printerPaused;
+String printerPrinting;
+String printerReady;
+String printerText;
+String printerHotend;
+String printerTarget;
+String payload;
+
+// Use one of the following:
+//OctoprintApi api; //Be sure to call init in setup.
+OctoprintApi api(client, ip, octoprint_httpPort, octoprint_apikey);               //If using IP address
+//OctoprintApi api(client, octoprint_host, octoprint_httpPort, octoprint_apikey);//If using hostname. Comment out one or the other.
+
+unsigned long api_mtbs = 2000; //mean time between api requests (60 seconds)
+unsigned long api_lasttime = 0;   //last time api request has been done
+//octo
 
 #define BUZZER_PIN 20
 
@@ -203,6 +244,30 @@ void guiHandler()
 void setup()
 {
   Serial.begin(115200); /* prepare for possible serial debug */
+  //octo
+ delay(10);
+
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  /* Explicitly set the ESP32 to be a WiFi-client, otherwise, it by default,
+     would try to act as both a client and an access-point and could cause
+     network-issues with your other WiFi-devices on your WiFi-network. */
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  //octo
   //Buzzer
   //pinMode(BUZZER_PIN, OUTPUT);
   //ledcSetup(4, 5000, 8);
@@ -211,6 +276,7 @@ void setup()
 
   tft.begin();          /* TFT init */
   tft.setRotation( 2 ); /* Landscape orientation, flipped */
+  tft.setBrightness(128);
   
   delay(500);
   pinMode(LCD_BL, OUTPUT);
@@ -241,7 +307,18 @@ void setup()
 
   ui_init();
   guiHandler();
-  
+  IP = lv_label_create(lv_scr_act());
+  lv_label_set_text(IP, WiFi.localIP().toString().c_str());
+  lv_obj_align(IP,LV_ALIGN_CENTER, 0,-200 );
+  STATE = lv_label_create(lv_scr_act());
+  lv_label_set_text(STATE, "STATE");
+  lv_obj_align(STATE,LV_ALIGN_CENTER, 70,-150 );
+  TOOL = lv_label_create(lv_scr_act());
+  lv_label_set_text(TOOL, "TOOL");
+  lv_obj_align(TOOL,LV_ALIGN_CENTER, 70, 0);
+  BED = lv_label_create(lv_scr_act());
+  lv_label_set_text(BED, "BED");
+  lv_obj_align(BED,LV_ALIGN_CENTER, 70, 150);
 }
 
 void loop()
@@ -251,8 +328,33 @@ void loop()
   lv_timer_handler(); /* let the GUI do its work */
   //ledcWrite(4, 0);//关闭蜂鸣器
   delay(1000);
-  sldval=lv_slider_get_value(ui_Slider1);
-  Serial.println(sldval);
-  
+  //octo
+  if (millis() - api_lasttime > api_mtbs || api_lasttime==0) {  //Check if time has expired to go check OctoPrint
+    if (WiFi.status() == WL_CONNECTED) { //Check WiFi connection status
+      if(api.getOctoprintVersion()){
+        Serial.print("Octoprint API: ");
+        Serial.println(api.octoprintVer.octoprintApi);
+        Serial.print("Octoprint Server: ");
+        Serial.println(api.octoprintVer.octoprintServer);
+      }
+      Serial.println();
+      if(api.getPrinterStatistics()){
+        String ST=api.printerStats.printerState;
+        String TO=String(api.printerStats.printerTool0TempActual);
+        String BE=String(api.printerStats.printerBedTempActual);
+        Serial.print("Printer Current State: ");
+        Serial.println(ST);
+        lv_label_set_text(STATE, ST.c_str());
+        Serial.print("Printer Temp - Tool0 (°C):  ");
+        Serial.println(TO);
+        lv_label_set_text(TOOL, TO.c_str());
+        Serial.print("Printer State - Bed (°C):  ");
+        Serial.println(BE);
+        lv_label_set_text(BED, BE.c_str());
+      }
+    }
+    api_lasttime = millis();  //Set api_lasttime to current milliseconds run
+  }
+  //octo
 }
 
