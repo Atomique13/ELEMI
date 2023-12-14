@@ -1,4 +1,3 @@
-#include "config.cpp"
 #include <Arduino.h>
 #include <lvgl.h>
 #define LGFX_USE_V1
@@ -16,19 +15,19 @@ static lv_obj_t *TOOL;
 static lv_obj_t *BED;
 static lv_obj_t *IP;
 //octo
-const char* ssid = wifi_ssid;          // your network SSID (name)
-const char* password = wifi_pass;  // your network password
+const char* ssid = "*********";          // your network SSID (name)
+const char* password = "****************";  // your network password
 
 WiFiClient client;
 
 
 
 // You only need to set one of the of follwowing:
-IPAddress ip(******************);                         // Your IP address of your OctoPrint server (inernal or external)
+IPAddress ip(192, 168, 0, ********);                         // Your IP address of your OctoPrint server (inernal or external)
 //char* octoprint_host = "octopi";  // Or your hostname. Comment out one or the other.
 
 const int octoprint_httpPort = 80;  //If you are connecting through a router this will work, but you need a random port forwarded to the OctoPrint server from your router. Enter that port here if you are external
-String octoprint_apikey = api_key; //See top of file or GIT Readme about getting API key
+String octoprint_apikey = "*****"; //See top of file or GIT Readme about getting API key
 
 String printerOperational;
 String printerPaused;
